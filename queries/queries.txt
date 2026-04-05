@@ -1,0 +1,118 @@
+========================
+SSH LOGS DASHBOARD
+==================
+
+[1] Total SSH Events
+index=main source="ssh_logs_new.json" sourcetype="_json"
+| stats count AS "Total SSH Events"
+
+[2] Failed SSH Logins
+index=main host="ssh_logs.json" sourcetype="_json" event_type="Failed SSH Login"
+| stats count AS "Failed Login"
+
+[3] Connection Without Authentication
+index=main host="ssh_logs.json" sourcetype="_json" event_type="Connection Without Authentication"
+| stats count AS "Connection Without Authentication"
+
+[4] Successful SSH Logins
+index=main source="ssh_logs_new.json" sourcetype="_json" event_type="Successful SSH Login"
+| stats count AS "Successful Logins"
+
+[5] Top Usernames in Failed Logins
+index=main source="ssh_logs_new.json" sourcetype="_json" event_type="Failed SSH Login"
+| top username
+
+[6] Top Source IPs with Multiple Failed Attempts
+index=main source="ssh_logs_new.json" sourcetype="_json" event_type="Multiple Failed Authentication Attempts"
+| top id.orig_h
+
+[7] Geographic Distribution of Failed Attempts
+index=main source="ssh_logs_new.json" sourcetype="_json" event_type="Multiple Failed Authentication Attempts"
+| table id.orig_h
+| iplocation id.orig_h
+| stats count by Country
+| geom geo_countries featureIdField="Country"
+
+========================
+APACHE WEB TRAFFIC DASHBOARD
+============================
+
+[1] Total Web Requests
+index=main source="apache_logs.json" host="webserver" sourcetype="_json"
+| stats count AS "Total Web Requests"
+
+[2] Successful GET Requests (HTTP 200)
+index=main source="apache_logs.json" host="webserver" sourcetype="_json" method=GET status=200
+| stats count AS "Successful Responses"
+
+[3] Client Errors (4xx)
+index=main source="apache_logs.json" host="webserver" sourcetype="_json"
+| where status>=400 AND status<500
+| stats count AS "Client Errors"
+
+[4] Server Errors (5xx)
+index=main source="apache_logs.json" host="webserver" sourcetype="_json"
+| where status>500
+| stats count AS "Server Errors"
+
+[5] Top Requested URIs
+index=main source="apache_logs.json" host="webserver" sourcetype="_json"
+| top uri
+
+[6] Requests by Source IP
+index=main source="apache_logs.json" host="webserver" sourcetype="_json"
+| stats count AS "Hits" by ip
+
+[7] Geographic Distribution of Web Traffic
+index=main source="apache_logs.json" host="webserver" sourcetype="_json" method=GET
+| table ip
+| iplocation ip
+| stats count by Country
+| geom geo_countries featureIdField="Country"
+
+========================
+CLOUDFLARE SECURITY DASHBOARD
+=============================
+
+[1] Total Requests
+index=main source="cloudflare_logs.json" host="Admin"
+| stats count AS "Total Requests"
+
+[2] Successful Responses (HTTP 200)
+index=main source="cloudflare_logs.json" host="Admin" Status=200
+| stats count AS "Successful Responses"
+
+[3] WAF Blocked Events
+index=main source="cloudflare_logs.json" host="Admin" Action="Blocked"
+| stats count AS "WAF Events"
+
+[4] Server Errors (5xx)
+index=main source="cloudflare_logs.json" host="Admin" Status>=500
+| stats count AS "Server Errors"
+
+[5] Top Requested URIs
+index=main source="cloudflare_logs.json" host="Admin"
+| top URI limit=10
+
+[6] Top Client IPs by Requests
+index=main source="cloudflare_logs.json" host="Admin"
+| stats count AS Requests by ClientIP
+| sort - Requests
+| head 10
+
+[7] Geographic Distribution (Normalized Country Names)
+index=main source="cloudflare_logs.json" host="Admin"
+| iplocation ClientIP
+| eval Country=case(
+Country="US","United States",
+Country="IN","India",
+Country="CN","China",
+Country="RU","Russia",
+Country="DE","Germany",
+Country="FR","France",
+Country="BR","Brazil",
+Country="JP","Japan",
+Country="NL","Netherlands"
+)
+| stats count by Country
+| geom geo_countries featureIdField=Country

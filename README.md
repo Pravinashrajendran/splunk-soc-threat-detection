@@ -111,17 +111,18 @@ Dashboards Created
 Project Structure
 
 ```
-splunk-soc-project/
+SOC-Splunk-Web-Monitoring/
 │
-├── README.md
-├── queries.txt
-├── screenshots/
-│   ├── ssh_dashboard.png
-│   ├── web_dashboard.png
-│   ├── cloudflare_dashboard.png
+├── logs/
+│   └── apache_logs.json
 │
-└── data/
-    ├── cloudflare_logs.json
+├── queries/
+│   └── spl_queries.txt
+│
+├── dashboards/
+│   └── dashboard_screenshots.png
+│
+└── README.md
 ```
 
 ---

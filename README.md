@@ -1,4 +1,4 @@
-Splunk SOC Project – SSH, Web and Cloudflare Log Analysis
+# Splunk-Based SOC Threat Detection & Log Analysis
 
 About This Project
 In this project, I built a simple SOC-style monitoring setup using Splunk to understand how real-world security teams detect and analyze threats.

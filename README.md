@@ -1,162 +1,127 @@
-# Splunk Based SOC Threat Detection & Log Analysis
+# SOC Threat Detection and Log Analysis with Splunk
 
-About This Project
-In this project, I built a simple SOC style monitoring setup using Splunk to understand how real world security teams detect and analyze threats.
+A hands-on Security Operations Center (SOC) lab using Splunk Enterprise to investigate authentication activity, monitor web requests, and explore security events in structured JSON logs.
 
-I worked on three different types of logs:
+## Project goals
 
-* SSH logs for attack detection
-* Apache web logs for traffic monitoring
-* Cloudflare style logs generated using Python
+- Identify repeated failed SSH logins and suspicious source IP activity.
+- Explore SSH authentication events and geographic enrichment with Splunk's `iplocation`.
+- Monitor Apache request volume, HTTP status codes, requested URIs, and client IPs.
+- Analyse custom-generated Cloudflare-style JSON events, including blocked actions and traffic patterns.
+- Build dashboards that summarise findings for an analyst.
 
-This project helped me gain hands on experience with log analysis, writing SPL queries, and building dashboards.
+## Data sources
 
----
+| Source | Repository location | Purpose |
+|---|---|---|
+| SSH authentication events | `logs/ssh_logs_sample (1).json` | Failed and successful login analysis |
+| Apache sample events | `logs/apache_logs_sample (1).json` | Web traffic and HTTP status analysis |
+| Cloudflare-style events | `logs/cloudflare_logs.json` | Request, action, status, and client-IP analysis |
+| SPL examples | `queries/queries.txt` | Search queries for the three dashboard use cases |
+| Dashboard screenshots | `screenshots/` | Visual evidence of the dashboards |
 
-Tools Used
+The Cloudflare-style logs are custom-generated demonstration data, not a claim of access to a live Cloudflare account. Results depend on the fields and events in the supplied sample data.
 
-* Splunk Enterprise
-* Python for generating Cloudflare logs
-* JSON log files
-* SPL (Search Processing Language)
+## Repository structure
 
----
-
-Use Case 1: SSH Brute Force Detection
-
-I analyzed SSH logs to detect brute force login attempts.
-
-What I Did:
-
-* Filtered failed login attempts
-* Identified IPs with multiple failures
-* Grouped activity by IP and username
-* Built a dashboard to visualize attacks
-
-Example Query:
-
-```spl
-index=main source="ssh_logs_new.json" sourcetype="_json" event_type="Failed SSH Login"
-| stats count by src_ip, user
-| where count > 5
-| sort count
+```text
+.
+├── README.md
+├── logs/
+│   ├── apache_logs_sample (1).json
+│   ├── cloudflare_logs.json
+│   └── ssh_logs_sample (1).json
+├── queries/
+│   └── queries.txt
+└── screenshots/
+    ├──  apache_dashboard.png
+    ├── Cloudflare_dashboard.png
+    └── ssh_dashboard.png
 ```
 
----
+## Tools
 
-GeoIP Based Attack Visualization
+- Splunk Enterprise
+- Splunk Search Processing Language (SPL)
+- JSON event data
+- Python-generated demonstration logs
+- Splunk GeoIP enrichment with `iplocation`
 
-To make the project more realistic, I added GeoIP analysis.
+## Getting started
 
-What I Did:
+1. Install and start Splunk Enterprise in a local lab.
+2. Create or select the `main` index, or update the queries to match your chosen index.
+3. Upload the sample JSON files using **Settings → Add Data → Upload**.
+4. Configure source, host, and sourcetype values consistently with the SPL searches. The examples in `queries/queries.txt` use specific source/host names; adjust them if your imported data uses different names.
+5. Open **Search & Reporting**, run the relevant searches, and use the results to build dashboard panels.
+6. Compare your panels with the screenshots in `screenshots/`.
 
-* Extracted attacker IPs
-* Used iplocation to find country
-* Visualized attacks on a map
+Splunk's exact upload options and field extraction can vary by version. Confirm that JSON fields are extracted correctly before relying on query output.
 
-This helped identify where attacks are coming from globally.
+## Use case 1 — SSH authentication monitoring
 
----
+The SPL examples cover total SSH events, failed logins, successful logins, connection events, commonly targeted usernames, source IPs, and geographic distribution.
 
-Use Case 2: Web Traffic Monitoring (Apache Logs)
-
-I analyzed Apache logs to understand user activity and detect anomalies.
-
-What I Did:
-
-* Counted total requests
-* Analyzed HTTP status codes
-* Identified top IPs and URLs
-* Created traffic trends
-
-Example Query:
+Example — count repeated failed logins by source IP and username:
 
 ```spl
-index=main source="apache_logs.json" host="webserver"
+index=main sourcetype=_json event_type="Failed SSH Login"
+| stats count AS failed_attempts by src_ip user
+| where failed_attempts > 5
+| sort - failed_attempts
+```
+
+This is an illustrative pattern. Ensure field names match the imported SSH events; the repository also includes dataset-specific field names in `queries/queries.txt`.
+
+## Use case 2 — Apache web traffic
+
+Explore total request volume, successful responses, client/server errors, popular URIs, request counts by IP, and geographic distribution.
+
+Example — requests over time:
+
+```spl
+index=main source="apache_logs.json" host="webserver" sourcetype=_json
 | timechart count
 ```
 
----
+## Use case 3 — Cloudflare-style event analysis
 
-Use Case 3: Cloudflare Log Analysis (Custom Generated)
+The sample dataset supports searches for total requests, HTTP status distributions, blocked actions, popular URIs, top client IPs, and geographic enrichment. Confirm field names and capitalisation such as `Status`, `Action`, `URI`, and `ClientIP` against ingested events.
 
-I generated Cloudflare style logs using Python to simulate real world web security monitoring.
+## Dashboard screenshots
 
-What I Did:
+### SSH monitoring
 
-* Created structured JSON logs
-* Simulated requests, IPs, and status codes
-* Ingested logs into Splunk
-* Analyzed traffic and behavior
+![SSH dashboard](screenshots/ssh_dashboard.png)
 
-What I Analyzed:
+### Apache web monitoring
 
-* Request patterns
-* Suspicious IP activity
-* Status code distribution
-* Traffic spikes
+![Apache dashboard](screenshots/%20apache_dashboard.png)
 
-This part shows my ability to not only analyze logs but also generate realistic datasets.
+### Cloudflare-style traffic analysis
 
----
+![Cloudflare dashboard](screenshots/Cloudflare_dashboard.png)
 
-Dashboards Created
+## What this project demonstrates
 
-* SSH attack detection dashboard
-* Web traffic monitoring dashboard
-* Cloudflare traffic analysis dashboard
+- Translating security questions into SPL searches
+- Investigating authentication and web-traffic events
+- Grouping events by user, IP address, URI, status, and time
+- Enriching IP data with geographic fields
+- Communicating findings through dashboards
 
----
+## Scope and limitations
 
-Project Structure
+This is a lab-based monitoring project using sample and generated logs. It does not represent a production SOC deployment. Real-time alerting, response automation, threat-intelligence integration, and production data pipelines are future improvements unless separately configured.
 
-```
-SOC Splunk Web Monitoring/
-│
-├── logs/
-│   └── apache_logs.json
-│
-├── queries/
-│   └── spl_queries.txt
-│
-├── dashboards/
-│   └── dashboard_screenshots.png
-│
-└── README.md
-```
+## Future improvements
 
----
+- Add reproducible data-ingestion instructions for each sample file
+- Validate and standardise field names across sources
+- Export dashboard definitions where supported
+- Add scheduled alerts and documented detection thresholds
+- Add tests or expected-result notes for important SPL searches
 
-Data Used
+## Author
 
-* SSH and Apache logs from cybersecurity training datasets
-* Cloudflare logs generated using Python
-* Used for educational and demonstration purposes
-
----
-
-What I Learned
-
-* Working with Splunk for SIEM use cases
-* Writing SPL queries for detection
-* Detecting brute force attacks
-* Analyzing web traffic
-* Creating dashboards
-* Using GeoIP for visualization
-* Generating custom log datasets
-
----
-
-Final Thoughts
-This project gave me practical exposure to how SOC analysts monitor systems, detect attacks, and analyze logs. It also helped me understand how different log sources can be combined for better visibility.
-
----
-
-Future Improvements
-
-* Add real time alerting
-* Automate responses
-* Integrate threat intelligence
-* Expand detection rules
-
----
+**Pravinash SMR** — Cybersecurity, SIEM, and threat-detection projects.
